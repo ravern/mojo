@@ -50,7 +50,7 @@ func parseCommand(conf Config, commands []string, args []string) (Objects, error
 			continue
 		}
 
-		// Check for the double dash.
+		// Check for the double dash only.
 		if args[0] == "--" {
 			obj, err := parseDoubleDash(conf)
 			if err != nil {
@@ -63,7 +63,91 @@ func parseCommand(conf Config, commands []string, args []string) (Objects, error
 			continue
 		}
 
-		// TODO: Parse as flag
+		// Check for combined flag value.
+		//
+		// The following code:
+		// - Modifies `args`
+		// - Does not modify `objs`
+		var combinedFlagValue bool
+		if i := strings.Index(args[0], "="); !conf.DisallowCombinedFlagValues && i != -1 {
+			combinedFlagValue = true
+
+			// Split into two different arguments and prepend them
+			// back into the arguments.
+			//
+			// This means that ["--flag=value", "argument"] will
+			// become ["--flag", "value", "argument"].
+			args = append([]string{args[0][:i], args[0][i+1:]}, args[1:]...)
+		}
+
+		// Check for single dash flag with multiple characters.
+		//
+		// The following code:
+		// - Modifies `args`
+		// - Modifies `objs`
+		var mutlipleFlagsEnd bool
+		if conf.AllowMutipleFlags && !strings.HasPrefix(args[0], "--") && len(args[0]) > 3 {
+			mutlipleFlagsEnd = true
+
+			// Split the characters into individual flags.
+			names := strings.Split(args[0][1:], "")
+			for i := range names {
+				names[i] = "-" + names[i]
+			}
+
+			// Remove the last flag in case it has a value.
+			lastName := names[len(names)-1]
+			names = names[:len(names)-1]
+
+			// Add the individual flags as bools with the first
+			// having the multiple flag start indication.
+			for i, name := range names {
+				obj, err := parseFlag(conf, commands, name, nil)
+				if err != nil {
+					return nil, err
+				}
+
+				if i == 0 {
+					obj.MultipleFlagsStart = true
+				}
+				obj.CombinedFlagValues = combinedFlagValue
+
+				objs = append(objs, obj)
+				args = args[1:]
+			}
+
+			// Prepend the last flag back into arguments.
+			//
+			// This means that ["-abcd", "value"] will become
+			// ["-d", "value"], with the bool flags "-a", "-b" and
+			// "-c" already appended.
+			args = append([]string{lastName}, args[1:]...)
+		}
+
+		// If there is a next value, and it isn't a flag, then set the
+		// value.
+		var value *string
+		if len(args) > 1 && !strings.HasPrefix(args[1], "-") {
+			tmp := string([]byte(args[1]))
+			value = &tmp
+		}
+
+		// Parse the flag (FINALLY).
+		obj, err := parseFlag(conf, commands, args[0], value)
+		if err != nil {
+			return nil, err
+		}
+
+		obj.CombinedFlagValues = combinedFlagValue
+		obj.MultipleFlagsEnd = mutlipleFlagsEnd
+
+		objs = append(objs, obj)
+		args = args[1:]
+		// If the flag isn't a bool flag, then remove the next argument
+		// as well.
+		if !obj.Bool {
+			args = args[1:]
+		}
 	}
 
 	return objs, nil
@@ -80,6 +164,45 @@ func parseDoubleDash(conf Config) (Object, error) {
 	}, nil
 }
 
+// parseFlag parses the given name and value as a flag based on the given
+// configuration.
+//
+// Pass a value if the next argument is not a flag. Check if the value was used
+// based on whether the resulting flag has Bool set.
+func parseFlag(conf Config, commands []string, name string, value *string) (ObjectFlag, error) {
+	// Find the flag in the configuration. If the configuration cannot be
+	// found and unconfigured flags are not allowed, then return invalid
+	// flag.
+	flag, ok := configFlag(conf, commands, name)
+	if !conf.AllowUnconfiguredFlags && !ok {
+		return ObjectFlag{}, errInvalidFlag(name)
+	}
+
+	// If the flag is a not bool flag, but a value is not provided, then the
+	// flag is invalid.
+	if ok && !flag.Bool && value == nil {
+		return ObjectFlag{}, errInvalidFlag(name)
+	}
+
+	// Create the flag and assign the value.
+	obj := ObjectFlag{Name: name}
+	if ok {
+		if flag.Bool {
+			obj.Bool = true
+		} else {
+			obj.Value = *value
+		}
+	} else {
+		if value == nil {
+			obj.Bool = true
+		} else {
+			obj.Value = *value
+		}
+	}
+
+	return obj, nil
+}
+
 // configCommands returns the command configurations of the given command stack,
 // with the root command being last.
 //
@@ -93,4 +216,23 @@ func configCommands(conf Config, commands []string) []ConfigCommand {
 		cmds = append([]ConfigCommand{cmd}, cmds...)
 	}
 	return cmds
+}
+
+// configFlag returns the flag configuration of the flag with the given name,
+// with precedence given to configuration in the subcommands.
+func configFlag(conf Config, commands []string, name string) (ConfigFlag, bool) {
+	var (
+		flag ConfigFlag
+		ok   bool
+	)
+
+	cmds := configCommands(conf, commands)
+	for _, cmd := range cmds {
+		if cmdFlag, ok := cmd.Flag(name); ok {
+			flag = cmdFlag
+			ok = true
+		}
+	}
+
+	return flag, ok
 }
