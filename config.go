@@ -4,6 +4,13 @@ package mojo
 type Config struct {
 	Root ConfigCommand
 
+	// AllowUnconfiguredFlags indicates whether unconfigured flags are
+	// allowed.
+	//
+	// If it isn't allowed, then unconfigured flags will result in an
+	// invalid flag error.
+	AllowUnconfiguredFlags bool
+
 	// AllowMultipleFlags indicates whether combining multiple flags
 	// (e.g. ls -al) is allowed.
 	//
