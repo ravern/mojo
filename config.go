@@ -38,6 +38,7 @@ type Config struct {
 
 // ConfigCommand contains configuration for a command.
 type ConfigCommand struct {
+	Name     string
 	Commands []ConfigCommand
 	Flags    []ConfigFlag
 }
@@ -46,4 +47,24 @@ type ConfigCommand struct {
 type ConfigFlag struct {
 	Name string
 	Bool bool
+}
+
+// Command returns the command configuration for the command of the given name.
+func (c ConfigCommand) Command(name string) (ConfigCommand, bool) {
+	for _, cmd := range c.Commands {
+		if cmd.Name == name {
+			return cmd, true
+		}
+	}
+	return ConfigCommand{}, false
+}
+
+// Flag returns the flag configuration for the command of the given name.
+func (c ConfigCommand) Flag(name string) (ConfigFlag, bool) {
+	for _, flag := range c.Flags {
+		if flag.Name == name {
+			return flag, true
+		}
+	}
+	return ConfigFlag{}, false
 }

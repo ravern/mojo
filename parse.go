@@ -30,7 +30,22 @@ func parseCommand(conf Config, commands []string, args []string) (Objects, error
 	for len(args) > 0 {
 		// Determine if the argument is a command or argument.
 		if !strings.HasPrefix(args[0], "-") {
-			// TODO: Parse as command or argument.
+			// Check for command.
+			if _, ok := configCommands(conf, commands)[0].Command(args[0]); ok {
+				// Parse the subcommand.
+				subObjs, err := parseCommand(conf, commands, args)
+				if err != nil {
+					return nil, err
+				}
+
+				// Append everything and break, since parsing
+				// is DONE!
+				objs = append(objs, subObjs...)
+				break
+			}
+
+			// Append as argument.
+			objs = append(objs, ObjectArgument{Value: args[0]})
 			args = args[1:]
 			continue
 		}
@@ -47,6 +62,8 @@ func parseCommand(conf Config, commands []string, args []string) (Objects, error
 			args = args[1:]
 			continue
 		}
+
+		// TODO: Parse as flag
 	}
 
 	return objs, nil
@@ -61,4 +78,19 @@ func parseDoubleDash(conf Config) (Object, error) {
 	return ObjectArgument{
 		Value: "--",
 	}, nil
+}
+
+// configCommands returns the command configurations of the given command stack,
+// with the root command being last.
+//
+// It is assumed that the command stack is safe. It it isn't, weird behaviour
+// will occur due to usage of invalid return values (i.e. the ok flag is
+// ignored).
+func configCommands(conf Config, commands []string) []ConfigCommand {
+	cmds := []ConfigCommand{conf.Root}
+	for _, command := range commands {
+		cmd, _ := cmds[0].Command(command)
+		cmds = append([]ConfigCommand{cmd}, cmds...)
+	}
+	return cmds
 }
