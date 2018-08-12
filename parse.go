@@ -211,7 +211,7 @@ func parseFlag(conf Config, commands []string, name string, value *string) (Obje
 // ignored).
 func configCommands(conf Config, commands []string) []ConfigCommand {
 	cmds := []ConfigCommand{conf.Root}
-	for _, command := range commands {
+	for _, command := range commands[1:] {
 		cmd, _ := cmds[0].Command(command)
 		cmds = append([]ConfigCommand{cmd}, cmds...)
 	}
@@ -228,7 +228,7 @@ func configFlag(conf Config, commands []string, name string) (ConfigFlag, bool) 
 
 	cmds := configCommands(conf, commands)
 	for _, cmd := range cmds {
-		if cmdFlag, ok := cmd.Flag(name); ok {
+		if cmdFlag, cmdOk := cmd.Flag(name); cmdOk {
 			flag = cmdFlag
 			ok = true
 		}
