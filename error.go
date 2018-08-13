@@ -14,3 +14,8 @@ func errInvalidFlag(name string) error {
 func errUnconfiguredFlag(name string) error {
 	return fmt.Errorf("mojo: unconfigured flag %s", name)
 }
+
+// errIncompleteMultipleFlag returns an incomplete multiple flag error.
+func errIncompleteMultipleFlag() error {
+	return fmt.Errorf("mojo: incomplete multiple flag")
+}
