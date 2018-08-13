@@ -221,18 +221,11 @@ func configCommands(conf Config, commands []string) []ConfigCommand {
 // configFlag returns the flag configuration of the flag with the given name,
 // with precedence given to configuration in the subcommands.
 func configFlag(conf Config, commands []string, name string) (ConfigFlag, bool) {
-	var (
-		flag ConfigFlag
-		ok   bool
-	)
-
 	cmds := configCommands(conf, commands)
 	for _, cmd := range cmds {
-		if cmdFlag, cmdOk := cmd.Flag(name); cmdOk {
-			flag = cmdFlag
-			ok = true
+		if flag, ok := cmd.Flag(name); ok {
+			return flag, ok
 		}
 	}
-
-	return flag, ok
+	return ConfigFlag{}, false
 }
