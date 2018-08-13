@@ -86,7 +86,7 @@ func parseCommand(conf Config, commands []string, args []string) (Objects, error
 		// - Modifies `args`
 		// - Modifies `objs`
 		var mutlipleFlagsEnd bool
-		if conf.AllowMutipleFlags && !strings.HasPrefix(args[0], "--") && len(args[0]) > 3 {
+		if conf.AllowMutipleFlags && !strings.HasPrefix(args[0], "--") && len(args[0]) > 2 {
 			mutlipleFlagsEnd = true
 
 			// Split the characters into individual flags.
@@ -107,13 +107,12 @@ func parseCommand(conf Config, commands []string, args []string) (Objects, error
 					return nil, err
 				}
 
+				// Set the start if this flag is the first.
 				if i == 0 {
 					obj.MultipleFlagsStart = true
 				}
-				obj.CombinedFlagValues = combinedFlagValue
 
 				objs = append(objs, obj)
-				args = args[1:]
 			}
 
 			// Prepend the last flag back into arguments.
