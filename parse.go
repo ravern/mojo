@@ -18,7 +18,7 @@ func Parse(conf Config, args []string) (Objects, error) {
 // configuration, in the context of the current command stack.
 //
 // The first argument given should be the name of the root command (e.g. git).
-func parseCommand(conf Config, commands []string, args []string) (Objects, error) {
+func parseCommand(conf Config, commands []string, args []string) ([]Object, error) {
 	var objs []Object
 
 	// Append the root command to the objects and the command stack.
@@ -33,14 +33,14 @@ func parseCommand(conf Config, commands []string, args []string) (Objects, error
 			// Check for command.
 			if _, ok := configCommands(conf, commands)[0].Command(args[0]); ok {
 				// Parse the subcommand.
-				subObjs, err := parseCommand(conf, commands, args)
+				subobjs, err := parseCommand(conf, commands, args)
 				if err != nil {
 					return nil, err
 				}
 
 				// Append everything and break, since parsing
 				// is DONE!
-				objs = append(objs, subObjs...)
+				objs = append(objs, subobjs...)
 				break
 			}
 
@@ -63,90 +63,15 @@ func parseCommand(conf Config, commands []string, args []string) (Objects, error
 			continue
 		}
 
-		// Check for combined flag value.
-		//
-		// The following code:
-		// - Modifies `args`
-		// - Does not modify `objs`
-		var combinedFlagValue bool
-		if i := strings.Index(args[0], "="); !conf.DisallowCombinedFlagValues && i != -1 {
-			combinedFlagValue = true
-
-			// Split into two different arguments and prepend them
-			// back into the arguments.
-			//
-			// This means that ["--flag=value", "argument"] will
-			// become ["--flag", "value", "argument"].
-			args = append([]string{args[0][:i], args[0][i+1:]}, args[1:]...)
-		}
-
-		// Check for single dash flag with multiple characters.
-		//
-		// The following code:
-		// - Modifies `args`
-		// - Modifies `objs`
-		var mutlipleFlagsEnd bool
-		if conf.AllowMutipleFlags && !strings.HasPrefix(args[0], "--") && len(args[0]) > 2 {
-			mutlipleFlagsEnd = true
-
-			// Split the characters into individual flags.
-			names := strings.Split(args[0][1:], "")
-			for i := range names {
-				names[i] = "-" + names[i]
-			}
-
-			// Remove the last flag in case it has a value.
-			lastName := names[len(names)-1]
-			names = names[:len(names)-1]
-
-			// Add the individual flags as bools with the first
-			// having the multiple flag start indication.
-			for i, name := range names {
-				obj, err := parseFlag(conf, commands, name, nil)
-				if err != nil {
-					return nil, err
-				}
-
-				// Set the start if this flag is the first.
-				if i == 0 {
-					obj.MultipleFlagsStart = true
-				}
-
-				objs = append(objs, obj)
-			}
-
-			// Prepend the last flag back into arguments.
-			//
-			// This means that ["-abcd", "value"] will become
-			// ["-d", "value"], with the bool flags "-a", "-b" and
-			// "-c" already appended.
-			args = append([]string{lastName}, args[1:]...)
-		}
-
-		// If there is a next value, and it isn't a flag, then set the
-		// value.
-		var value *string
-		if len(args) > 1 && !strings.HasPrefix(args[1], "-") {
-			tmp := string([]byte(args[1]))
-			value = &tmp
-		}
-
-		// Parse the flag (FINALLY).
-		obj, err := parseFlag(conf, commands, args[0], value)
+		// Parse as flag.
+		objFlags, n, err := parseFlag(conf, commands, args)
 		if err != nil {
 			return nil, err
 		}
-
-		obj.CombinedFlagValues = combinedFlagValue
-		obj.MultipleFlagsEnd = mutlipleFlagsEnd
-
-		objs = append(objs, obj)
-		args = args[1:]
-		// If the flag isn't a bool flag, then remove the next argument
-		// as well.
-		if !obj.Bool {
-			args = args[1:]
+		for _, obj := range objFlags {
+			objs = append(objs, obj)
 		}
+		args = args[n:]
 	}
 
 	return objs, nil
@@ -163,43 +88,147 @@ func parseDoubleDash(conf Config) (Object, error) {
 	}, nil
 }
 
-// parseFlag parses the given name and value as a flag based on the given
+// parseFlag parses a flag from the given arguments based on the given
+// configuration.
+func parseFlag(conf Config, commands []string, args []string) ([]ObjectFlag, int, error) {
+	var (
+		objs []ObjectFlag
+		n    = 1
+	)
+
+	// Check for combined flag value and splits it into two arguments if
+	// found.
+	var combinedFlagValue bool
+	if i := strings.Index(args[0], "="); !conf.DisallowCombinedFlagValues && i != -1 {
+		combinedFlagValue = true
+
+		// Split into two different arguments and prepend them
+		// back into the arguments.
+		//
+		// This means that ["--flag=value", "argument"] will
+		// become ["--flag", "value", "argument"].
+		args = append([]string{args[0][:i], args[0][i+1:]}, args[1:]...)
+		n--
+	}
+
+	// Check for single dash flag with multiple characters and removes all
+	// the bool flags, leaving only the last flag which possibly has a
+	// value.
+	var mutlipleFlagsEnd bool
+	if conf.AllowMutipleFlags && !strings.HasPrefix(args[0], "--") && len(args[0]) > 2 {
+		mutlipleFlagsEnd = true
+
+		// Split the characters into individual flags.
+		names := strings.Split(args[0][1:], "")
+		for i := range names {
+			names[i] = "-" + names[i]
+		}
+
+		// Remove the last flag in case it has a value.
+		lastName := names[len(names)-1]
+		names = names[:len(names)-1]
+
+		// Add the individual flags as bools with the first
+		// having the multiple flag start indication.
+		for i, name := range names {
+			obj, err := newBoolFlag(conf, commands, name)
+			if err != nil {
+				return nil, 0, err
+			}
+
+			// Set the start if this flag is the first.
+			if i == 0 {
+				obj.MultipleFlagsStart = true
+			}
+
+			objs = append(objs, obj)
+		}
+
+		// Prepend the last flag back into arguments.
+		//
+		// This means that ["-abcd", "value"] will become
+		// ["-d", "value"], with the bool flags "-a", "-b" and
+		// "-c" already appended.
+		args = append([]string{lastName}, args[1:]...)
+	}
+
+	// Create the flag (FINALLY!).
+	var (
+		obj ObjectFlag
+		err error
+	)
+
+	// If there is a next value, and it isn't a flag, then create
+	// a flag with a value. Otherwise, create the flag as a bool
+	// flag.
+	if len(args) > 1 && !strings.HasPrefix(args[1], "-") {
+		obj, err = newFlag(conf, commands, args[0], args[1])
+	} else {
+		obj, err = newBoolFlag(conf, commands, args[0])
+	}
+	if err != nil {
+		return nil, 0, err
+	}
+
+	obj.CombinedFlagValues = combinedFlagValue
+	obj.MultipleFlagsEnd = mutlipleFlagsEnd
+
+	objs = append(objs, obj)
+	if !obj.Bool {
+		n++
+	}
+
+	return objs, n, nil
+}
+
+// newFlag creates a new flag with the given name and value based on the given
 // configuration.
 //
-// Pass a value if the next argument is not a flag. Check if the value was used
-// based on whether the resulting flag has Bool set.
-func parseFlag(conf Config, commands []string, name string, value *string) (ObjectFlag, error) {
+// The given value might or might not be used (e.g. the flag with the given name
+// is specified in the configuration to be a bool flag). Therefore, always check
+// Bool on the result and slice the arguments where necessary.
+func newFlag(conf Config, commands []string, name string, value string) (ObjectFlag, error) {
 	// Find the flag in the configuration. If the configuration cannot be
-	// found and unconfigured flags are not allowed, then return invalid
-	// flag.
-	flag, ok := configFlag(conf, commands, name)
+	// found and unconfigured flags are not allowed, then return error.
+	confFlag, ok := configFlag(conf, commands, name)
 	if !conf.AllowUnconfiguredFlags && !ok {
+		return ObjectFlag{}, errUnconfiguredFlag(name)
+	}
+
+	// Create the flag. If the flag is defined to be a bool flag in the
+	// configuration, then don't use the value.
+	if ok && confFlag.Bool {
+		return ObjectFlag{
+			Name: name,
+			Bool: true,
+		}, nil
+	}
+	return ObjectFlag{
+		Name:  name,
+		Value: value,
+	}, nil
+}
+
+// newBoolFlag creates a new bool flag with the given name based on the given
+// configuration.
+func newBoolFlag(conf Config, commands []string, name string) (ObjectFlag, error) {
+	// Find the flag in the configuration. If the configuration cannot be
+	// found and unconfigured flags are not allowed, then return error.
+	confFlag, ok := configFlag(conf, commands, name)
+	if !conf.AllowUnconfiguredFlags && !ok {
+		return ObjectFlag{}, errUnconfiguredFlag(name)
+	}
+
+	// If the flag is a not bool flag, then return error.
+	if ok && !confFlag.Bool {
 		return ObjectFlag{}, errInvalidFlag(name)
 	}
 
-	// If the flag is a not bool flag, but a value is not provided, then the
-	// flag is invalid.
-	if ok && !flag.Bool && value == nil {
-		return ObjectFlag{}, errInvalidFlag(name)
-	}
-
-	// Create the flag and assign the value.
-	obj := ObjectFlag{Name: name}
-	if ok {
-		if flag.Bool {
-			obj.Bool = true
-		} else {
-			obj.Value = *value
-		}
-	} else {
-		if value == nil {
-			obj.Bool = true
-		} else {
-			obj.Value = *value
-		}
-	}
-
-	return obj, nil
+	// Create the flag.
+	return ObjectFlag{
+		Name: name,
+		Bool: true,
+	}, nil
 }
 
 // configCommands returns the command configurations of the given command stack,

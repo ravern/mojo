@@ -205,6 +205,9 @@ func TestParse(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
+		if test.name != "CombinedMultipleFlagValuesAndArgument" {
+			continue
+		}
 		t.Run(test.name, func(t *testing.T) {
 			var got rets
 			got.objs, got.err = mojo.Parse(test.args.conf, test.args.args)
