@@ -35,7 +35,7 @@ func TestParse(t *testing.T) {
 				args: []string{"tldr", "-v"},
 			},
 			want: rets{
-				err: fmt.Errorf("mojo: unconfigured flag -v"),
+				err: fmt.Errorf("mojo: unconfigured flag: -v"),
 			},
 		},
 		{
@@ -52,7 +52,7 @@ func TestParse(t *testing.T) {
 				args: []string{"tldr", "-v"},
 			},
 			want: rets{
-				err: fmt.Errorf("mojo: invalid flag -v"),
+				err: fmt.Errorf("mojo: invalid flag: -v"),
 			},
 		},
 		{
@@ -67,7 +67,7 @@ func TestParse(t *testing.T) {
 				args: []string{"tldr", "--", "nmap"},
 			},
 			want: rets{
-				err: fmt.Errorf("mojo: invalid flag --"),
+				err: fmt.Errorf("mojo: invalid flag: --"),
 			},
 		},
 		{
