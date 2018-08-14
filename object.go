@@ -87,3 +87,23 @@ func (objs Objects) Flag(name string) (ObjectFlag, error) {
 	}
 	return objFlags[0], nil
 }
+
+// Argument returns the argument at the given index.
+func (objs Objects) Argument(i int) (ObjectArgument, error) {
+	var j int
+
+	for _, obj := range objs {
+		objArg, ok := obj.(ObjectArgument)
+		if !ok {
+			continue
+		}
+
+		if j == i {
+			return objArg, nil
+		}
+
+		j++
+	}
+
+	return ObjectArgument{}, errArgumentNotFound(i)
+}

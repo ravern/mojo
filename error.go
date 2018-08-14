@@ -29,3 +29,8 @@ func errFlagNotFound(name string) error {
 func errTooManyFlags(name string) error {
 	return fmt.Errorf("mojo: too many flags: %s", name)
 }
+
+// errArgumentNotFound returns an argument not found error.
+func errArgumentNotFound(i int) error {
+	return fmt.Errorf("mojo: argument not found: %d", i)
+}

@@ -149,3 +149,63 @@ func TestObjects_Flag(t *testing.T) {
 		})
 	}
 }
+
+func TestObjects_Argument(t *testing.T) {
+	type args struct {
+		objs mojo.Objects
+		i    int
+	}
+
+	type rets struct {
+		obj mojo.ObjectArgument
+		err error
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want rets
+	}{
+		{
+			name: "ErrArgumentNotFound",
+			args: args{
+				objs: []mojo.Object{
+					mojo.ObjectCommand{Name: "tldr"},
+					mojo.ObjectArgument{Value: "nmap"},
+				},
+				i: 1,
+			},
+			want: rets{
+				err: fmt.Errorf("mojo: argument not found: 1"),
+			},
+		},
+		{
+			name: "BoolFlagAndArgument",
+			args: args{
+				objs: []mojo.Object{
+					mojo.ObjectCommand{Name: "tldr"},
+					mojo.ObjectFlag{Name: "--verbose", Bool: true},
+					mojo.ObjectArgument{Value: "netstat"},
+					mojo.ObjectArgument{Value: "nmap"},
+				},
+				i: 1,
+			},
+			want: rets{
+				obj: mojo.ObjectArgument{Value: "nmap"},
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var got rets
+			got.obj, got.err = test.args.objs.Argument(test.args.i)
+			if fmt.Sprintf("%v", got.err) != fmt.Sprintf("%v", test.want.err) {
+				t.Errorf("want err %v, got err %v", test.want.err, got.err)
+				return
+			}
+			if !reflect.DeepEqual(got.obj, test.want.obj) {
+				t.Errorf("want obj %v, got obj %v", test.want.obj, got.obj)
+			}
+		})
+	}
+}
