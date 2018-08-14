@@ -25,6 +25,52 @@ func TestParse(t *testing.T) {
 		want rets
 	}{
 		{
+			name: "ErrUnconfiguredFlag",
+			args: args{
+				conf: mojo.Config{
+					Root: mojo.ConfigCommand{
+						Name: "tldr",
+					},
+				},
+				args: []string{"tldr", "-v"},
+			},
+			want: rets{
+				err: fmt.Errorf("mojo: unconfigured flag -v"),
+			},
+		},
+		{
+			name: "ErrInvalidFlag",
+			args: args{
+				conf: mojo.Config{
+					Root: mojo.ConfigCommand{
+						Name: "tldr",
+						Flags: []mojo.ConfigFlag{
+							{Name: "-v"},
+						},
+					},
+				},
+				args: []string{"tldr", "-v"},
+			},
+			want: rets{
+				err: fmt.Errorf("mojo: invalid flag -v"),
+			},
+		},
+		{
+			name: "DisallowDoubleDash",
+			args: args{
+				conf: mojo.Config{
+					DisallowDoubleDash: true,
+					Root: mojo.ConfigCommand{
+						Name: "tldr",
+					},
+				},
+				args: []string{"tldr", "--", "nmap"},
+			},
+			want: rets{
+				err: fmt.Errorf("mojo: invalid flag --"),
+			},
+		},
+		{
 			name: "Argument",
 			args: args{
 				conf: mojo.Config{
