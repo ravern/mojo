@@ -6,6 +6,11 @@ import (
 
 // Assemble assembles the given objects back into arguments.
 func (objs Objects) Assemble() ([]string, error) {
+	return assemble(objs)
+}
+
+// assemble assembles arguments from the given objects.
+func assemble(objs []Object) ([]string, error) {
 	var args []string
 
 	for len(objs) > 0 {
