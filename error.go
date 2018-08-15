@@ -2,35 +2,41 @@ package mojo
 
 import "fmt"
 
-// errInvalidFlag returns an invalid flag error.
-func errInvalidFlag(name string) error {
-	return fmt.Errorf("mojo: invalid flag: %s", name)
+// Possible wrapped errors.
+var (
+	ErrInvalidFlag            = fmt.Errorf("mojo: invalid flag")
+	ErrIncompleteMultipleFlag = fmt.Errorf("mojo: incomplete multiple flag")
+	ErrFlagNotFound           = fmt.Errorf("mojo: flag not found")
+	ErrArgumentNotFound       = fmt.Errorf("mojo: argument not found")
+
+	// ErrUnconfiguredFlag occurs during parsing when a flag that does not
+	// exist in the configuration is found.
+	ErrUnconfiguredFlag = fmt.Errorf("mojo: unconfigured flag")
+
+	// ErrTooManyFlags occurs when more than one flag with the same name
+	// is found when only one is requested.
+	ErrTooManyFlags = fmt.Errorf("mojo: too many flags")
+)
+
+// FlagError represents a flag error.
+type FlagError struct {
+	Name string
+	Err  error
 }
 
-// errUnconfiguredFlag returns an unconfigured flag error.
-//
-// This error occurs when a flag that does not exist in the configuration is
-// found in the arguments.
-func errUnconfiguredFlag(name string) error {
-	return fmt.Errorf("mojo: unconfigured flag: %s", name)
+func (err FlagError) Error() string {
+	if err.Name == "" {
+		return err.Err.Error()
+	}
+	return fmt.Sprintf("%v: %s", err.Err, err.Name)
 }
 
-// errIncompleteMultipleFlag returns an incomplete multiple flag error.
-func errIncompleteMultipleFlag() error {
-	return fmt.Errorf("mojo: incomplete multiple flag")
+// ArgumentError represents an argument error.
+type ArgumentError struct {
+	Index int
+	Err   error
 }
 
-// errFlagNotFound returns a flag not found error.
-func errFlagNotFound(name string) error {
-	return fmt.Errorf("mojo: flag not found: %s", name)
-}
-
-// errTooManyFlags returns a too many flags error.
-func errTooManyFlags(name string) error {
-	return fmt.Errorf("mojo: too many flags: %s", name)
-}
-
-// errArgumentNotFound returns an argument not found error.
-func errArgumentNotFound(i int) error {
-	return fmt.Errorf("mojo: argument not found: %d", i)
+func (err ArgumentError) Error() string {
+	return fmt.Sprintf("%v: %d", err.Err, err.Index)
 }

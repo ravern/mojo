@@ -2,7 +2,7 @@ package mojo
 
 // Config contains configuration that defines how to parse certain objects.
 type Config struct {
-	Root ConfigCommand
+	Root CommandConfig
 
 	// AllowUnconfiguredFlags indicates whether unconfigured flags are
 	// allowed.
@@ -36,35 +36,35 @@ type Config struct {
 	DisallowDoubleDash bool
 }
 
-// ConfigCommand contains configuration for a command.
-type ConfigCommand struct {
+// CommandConfig contains configuration for a command.
+type CommandConfig struct {
 	Name     string
-	Commands []ConfigCommand
-	Flags    []ConfigFlag
+	Commands []CommandConfig
+	Flags    []FlagConfig
 }
 
-// ConfigFlag contains configuration for a flag.
-type ConfigFlag struct {
+// FlagConfig contains configuration for a flag.
+type FlagConfig struct {
 	Name string
 	Bool bool
 }
 
 // Command returns the command configuration for the command of the given name.
-func (c ConfigCommand) Command(name string) (ConfigCommand, bool) {
+func (c CommandConfig) Command(name string) (CommandConfig, bool) {
 	for _, cmd := range c.Commands {
 		if cmd.Name == name {
 			return cmd, true
 		}
 	}
-	return ConfigCommand{}, false
+	return CommandConfig{}, false
 }
 
 // Flag returns the flag configuration for the command of the given name.
-func (c ConfigCommand) Flag(name string) (ConfigFlag, bool) {
+func (c CommandConfig) Flag(name string) (FlagConfig, bool) {
 	for _, flag := range c.Flags {
 		if flag.Name == name {
 			return flag, true
 		}
 	}
-	return ConfigFlag{}, false
+	return FlagConfig{}, false
 }

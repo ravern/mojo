@@ -15,13 +15,13 @@ func assemble(objs []Object) ([]string, error) {
 
 	for len(objs) > 0 {
 		switch objs[0].(type) {
-		case ObjectCommand:
-			args = append(args, objs[0].(ObjectCommand).Name)
+		case CommandObject:
+			args = append(args, objs[0].(CommandObject).Name)
 			objs = objs[1:]
-		case ObjectArgument:
-			args = append(args, objs[0].(ObjectArgument).Value)
+		case ArgumentObject:
+			args = append(args, objs[0].(ArgumentObject).Value)
 			objs = objs[1:]
-		case ObjectFlag:
+		case FlagObject:
 			newArgs, n, err := assembleFlag(objs)
 			if err != nil {
 				return nil, err
@@ -47,7 +47,7 @@ func assembleFlag(objs []Object) ([]string, int, error) {
 	)
 
 	// Panic if the first object is not a flag.
-	obj := objs[0].(ObjectFlag)
+	obj := objs[0].(FlagObject)
 	objs = objs[1:]
 
 	// Extract the possible name.
@@ -60,25 +60,29 @@ func assembleFlag(objs []Object) ([]string, int, error) {
 			// If there are no more objects, this means that there
 			// was no end flag. Return error.
 			if len(objs) == 0 {
-				return nil, 0, errIncompleteMultipleFlag()
+				return nil, 0, FlagError{
+					Err: ErrIncompleteMultipleFlag,
+				}
 			}
 
 			// If the next object is not a flag, this means that
 			// there was no end flag. Return error.
-			objFlag, ok := objs[0].(ObjectFlag)
+			flagObj, ok := objs[0].(FlagObject)
 			if !ok {
-				return nil, 0, errIncompleteMultipleFlag()
+				return nil, 0, FlagError{
+					Err: ErrIncompleteMultipleFlag,
+				}
 			}
 
 			// Append the name to the name builder after removing
 			// the dash.
-			name.WriteString(objFlag.Name[1:])
+			name.WriteString(flagObj.Name[1:])
 			objs = objs[1:]
 			n++
 
 			// Check whether it is the end flag.
-			if objFlag.MultipleFlagsEnd {
-				obj = objFlag
+			if flagObj.MultipleFlagsEnd {
+				obj = flagObj
 				break
 			}
 		}

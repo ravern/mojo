@@ -28,7 +28,7 @@ func TestParse(t *testing.T) {
 			name: "ErrUnconfiguredFlag",
 			args: args{
 				conf: mojo.Config{
-					Root: mojo.ConfigCommand{
+					Root: mojo.CommandConfig{
 						Name: "tldr",
 					},
 				},
@@ -42,9 +42,9 @@ func TestParse(t *testing.T) {
 			name: "ErrInvalidFlag",
 			args: args{
 				conf: mojo.Config{
-					Root: mojo.ConfigCommand{
+					Root: mojo.CommandConfig{
 						Name: "tldr",
-						Flags: []mojo.ConfigFlag{
+						Flags: []mojo.FlagConfig{
 							{Name: "-v"},
 						},
 					},
@@ -60,7 +60,7 @@ func TestParse(t *testing.T) {
 			args: args{
 				conf: mojo.Config{
 					DisallowDoubleDash: true,
-					Root: mojo.ConfigCommand{
+					Root: mojo.CommandConfig{
 						Name: "tldr",
 					},
 				},
@@ -74,7 +74,7 @@ func TestParse(t *testing.T) {
 			name: "Argument",
 			args: args{
 				conf: mojo.Config{
-					Root: mojo.ConfigCommand{
+					Root: mojo.CommandConfig{
 						Name: "tldr",
 					},
 				},
@@ -82,8 +82,8 @@ func TestParse(t *testing.T) {
 			},
 			want: rets{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectArgument{Value: "nmap"},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.ArgumentObject{Value: "nmap"},
 				},
 			},
 		},
@@ -91,9 +91,9 @@ func TestParse(t *testing.T) {
 			name: "BoolFlagAndArgument",
 			args: args{
 				conf: mojo.Config{
-					Root: mojo.ConfigCommand{
+					Root: mojo.CommandConfig{
 						Name: "tldr",
-						Flags: []mojo.ConfigFlag{
+						Flags: []mojo.FlagConfig{
 							{
 								Name: "--verbose",
 								Bool: true,
@@ -105,9 +105,9 @@ func TestParse(t *testing.T) {
 			},
 			want: rets{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectFlag{Name: "--verbose", Bool: true},
-					mojo.ObjectArgument{Value: "nmap"},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.FlagObject{Name: "--verbose", Bool: true},
+					mojo.ArgumentObject{Value: "nmap"},
 				},
 			},
 		},
@@ -115,9 +115,9 @@ func TestParse(t *testing.T) {
 			name: "FlagAndArgument",
 			args: args{
 				conf: mojo.Config{
-					Root: mojo.ConfigCommand{
+					Root: mojo.CommandConfig{
 						Name: "tldr",
-						Flags: []mojo.ConfigFlag{
+						Flags: []mojo.FlagConfig{
 							{Name: "--level"},
 						},
 					},
@@ -126,9 +126,9 @@ func TestParse(t *testing.T) {
 			},
 			want: rets{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectFlag{Name: "--level", Value: "5"},
-					mojo.ObjectArgument{Value: "nmap"},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.FlagObject{Name: "--level", Value: "5"},
+					mojo.ArgumentObject{Value: "nmap"},
 				},
 			},
 		},
@@ -138,7 +138,7 @@ func TestParse(t *testing.T) {
 				conf: mojo.Config{
 					AllowMutipleFlags:      true,
 					AllowUnconfiguredFlags: true,
-					Root: mojo.ConfigCommand{
+					Root: mojo.CommandConfig{
 						Name: "tldr",
 					},
 				},
@@ -146,11 +146,11 @@ func TestParse(t *testing.T) {
 			},
 			want: rets{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectFlag{Name: "-v", Bool: true, MultipleFlagsStart: true},
-					mojo.ObjectFlag{Name: "-b", Bool: true},
-					mojo.ObjectFlag{Name: "-l", Value: "5", MultipleFlagsEnd: true},
-					mojo.ObjectArgument{Value: "nmap"},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.FlagObject{Name: "-v", Bool: true, MultipleFlagsStart: true},
+					mojo.FlagObject{Name: "-b", Bool: true},
+					mojo.FlagObject{Name: "-l", Value: "5", MultipleFlagsEnd: true},
+					mojo.ArgumentObject{Value: "nmap"},
 				},
 			},
 		},
@@ -160,7 +160,7 @@ func TestParse(t *testing.T) {
 				conf: mojo.Config{
 					AllowMutipleFlags:      true,
 					AllowUnconfiguredFlags: true,
-					Root: mojo.ConfigCommand{
+					Root: mojo.CommandConfig{
 						Name: "tldr",
 					},
 				},
@@ -168,10 +168,10 @@ func TestParse(t *testing.T) {
 			},
 			want: rets{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectFlag{Name: "-v", Bool: true, MultipleFlagsStart: true},
-					mojo.ObjectFlag{Name: "-l", Value: "5", MultipleFlagsEnd: true, CombinedFlagValues: true},
-					mojo.ObjectArgument{Value: "nmap"},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.FlagObject{Name: "-v", Bool: true, MultipleFlagsStart: true},
+					mojo.FlagObject{Name: "-l", Value: "5", MultipleFlagsEnd: true, CombinedFlagValues: true},
+					mojo.ArgumentObject{Value: "nmap"},
 				},
 			},
 		},
@@ -179,9 +179,9 @@ func TestParse(t *testing.T) {
 			name: "SubcommandAndArgument",
 			args: args{
 				conf: mojo.Config{
-					Root: mojo.ConfigCommand{
+					Root: mojo.CommandConfig{
 						Name: "tldr",
-						Commands: []mojo.ConfigCommand{
+						Commands: []mojo.CommandConfig{
 							{Name: "add"},
 						},
 					},
@@ -190,9 +190,9 @@ func TestParse(t *testing.T) {
 			},
 			want: rets{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectCommand{Name: "add"},
-					mojo.ObjectArgument{Value: "nmap"},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.CommandObject{Name: "add"},
+					mojo.ArgumentObject{Value: "nmap"},
 				},
 			},
 		},
@@ -200,9 +200,9 @@ func TestParse(t *testing.T) {
 			name: "SubcommandOrArgument",
 			args: args{
 				conf: mojo.Config{
-					Root: mojo.ConfigCommand{
+					Root: mojo.CommandConfig{
 						Name: "tldr",
-						Commands: []mojo.ConfigCommand{
+						Commands: []mojo.CommandConfig{
 							{Name: "add"},
 						},
 					},
@@ -211,8 +211,8 @@ func TestParse(t *testing.T) {
 			},
 			want: rets{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectArgument{Value: "nmap"},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.ArgumentObject{Value: "nmap"},
 				},
 			},
 		},
@@ -220,17 +220,17 @@ func TestParse(t *testing.T) {
 			name: "SubcommandAndFlagAndArgument",
 			args: args{
 				conf: mojo.Config{
-					Root: mojo.ConfigCommand{
+					Root: mojo.CommandConfig{
 						Name: "tldr",
-						Commands: []mojo.ConfigCommand{
+						Commands: []mojo.CommandConfig{
 							{
 								Name: "add",
-								Flags: []mojo.ConfigFlag{
+								Flags: []mojo.FlagConfig{
 									{Name: "--level"},
 								},
 							},
 						},
-						Flags: []mojo.ConfigFlag{
+						Flags: []mojo.FlagConfig{
 							{
 								Name: "--level",
 								Bool: true,
@@ -242,10 +242,10 @@ func TestParse(t *testing.T) {
 			},
 			want: rets{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectCommand{Name: "add"},
-					mojo.ObjectFlag{Name: "--level", Value: "5"},
-					mojo.ObjectArgument{Value: "nmap"},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.CommandObject{Name: "add"},
+					mojo.FlagObject{Name: "--level", Value: "5"},
+					mojo.ArgumentObject{Value: "nmap"},
 				},
 			},
 		},

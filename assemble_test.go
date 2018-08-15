@@ -27,8 +27,8 @@ func TestObjects_Assemble(t *testing.T) {
 			name: "Argument",
 			args: args{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectArgument{Value: "nmap"},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.ArgumentObject{Value: "nmap"},
 				},
 			},
 			want: rets{
@@ -39,9 +39,9 @@ func TestObjects_Assemble(t *testing.T) {
 			name: "BoolFlagAndArgument",
 			args: args{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectFlag{Name: "--verbose", Bool: true},
-					mojo.ObjectArgument{Value: "nmap"},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.FlagObject{Name: "--verbose", Bool: true},
+					mojo.ArgumentObject{Value: "nmap"},
 				},
 			},
 			want: rets{
@@ -52,9 +52,9 @@ func TestObjects_Assemble(t *testing.T) {
 			name: "FlagAndArgument",
 			args: args{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectFlag{Name: "--level", Value: "5"},
-					mojo.ObjectArgument{Value: "nmap"},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.FlagObject{Name: "--level", Value: "5"},
+					mojo.ArgumentObject{Value: "nmap"},
 				},
 			},
 			want: rets{
@@ -65,11 +65,11 @@ func TestObjects_Assemble(t *testing.T) {
 			name: "MultipleFlagsAndArgument",
 			args: args{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectFlag{Name: "-v", Bool: true, MultipleFlagsStart: true},
-					mojo.ObjectFlag{Name: "-b", Bool: true},
-					mojo.ObjectFlag{Name: "-l", Value: "5", MultipleFlagsEnd: true},
-					mojo.ObjectArgument{Value: "nmap"},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.FlagObject{Name: "-v", Bool: true, MultipleFlagsStart: true},
+					mojo.FlagObject{Name: "-b", Bool: true},
+					mojo.FlagObject{Name: "-l", Value: "5", MultipleFlagsEnd: true},
+					mojo.ArgumentObject{Value: "nmap"},
 				},
 			},
 			want: rets{
@@ -80,10 +80,10 @@ func TestObjects_Assemble(t *testing.T) {
 			name: "CombinedMultipleFlagValuesAndArgument",
 			args: args{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectFlag{Name: "-v", Bool: true, MultipleFlagsStart: true},
-					mojo.ObjectFlag{Name: "-l", Value: "5", MultipleFlagsEnd: true, CombinedFlagValues: true},
-					mojo.ObjectArgument{Value: "nmap"},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.FlagObject{Name: "-v", Bool: true, MultipleFlagsStart: true},
+					mojo.FlagObject{Name: "-l", Value: "5", MultipleFlagsEnd: true, CombinedFlagValues: true},
+					mojo.ArgumentObject{Value: "nmap"},
 				},
 			},
 			want: rets{
@@ -94,9 +94,9 @@ func TestObjects_Assemble(t *testing.T) {
 			name: "SubcommandAndArgument",
 			args: args{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectCommand{Name: "add"},
-					mojo.ObjectArgument{Value: "nmap"},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.CommandObject{Name: "add"},
+					mojo.ArgumentObject{Value: "nmap"},
 				},
 			},
 			want: rets{
@@ -107,8 +107,8 @@ func TestObjects_Assemble(t *testing.T) {
 			name: "SubcommandOrArgument",
 			args: args{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectArgument{Value: "nmap"},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.ArgumentObject{Value: "nmap"},
 				},
 			},
 			want: rets{
@@ -119,10 +119,10 @@ func TestObjects_Assemble(t *testing.T) {
 			name: "SubcommandAndFlagAndArgument",
 			args: args{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectCommand{Name: "add"},
-					mojo.ObjectFlag{Name: "--level", Value: "5"},
-					mojo.ObjectArgument{Value: "nmap"},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.CommandObject{Name: "add"},
+					mojo.FlagObject{Name: "--level", Value: "5"},
+					mojo.ArgumentObject{Value: "nmap"},
 				},
 			},
 			want: rets{

@@ -8,15 +8,15 @@ type Object interface {
 	object()
 }
 
-// ObjectCommand represents a command that has been parsed.
-type ObjectCommand struct {
+// CommandObject represents a command that has been parsed.
+type CommandObject struct {
 	Name string
 }
 
-func (ObjectCommand) object() {}
+func (CommandObject) object() {}
 
-// ObjectFlag represents a flag that has been parsed.
-type ObjectFlag struct {
+// FlagObject represents a flag that has been parsed.
+type FlagObject struct {
 	Name  string
 	Value string
 
@@ -44,66 +44,75 @@ type ObjectFlag struct {
 	CombinedFlagValues bool
 }
 
-func (ObjectFlag) object() {}
+func (FlagObject) object() {}
 
-// ObjectArgument represents an argument that has been parsed.
-type ObjectArgument struct {
+// ArgumentObject represents an argument that has been parsed.
+type ArgumentObject struct {
 	Value string
 }
 
-func (ObjectArgument) object() {}
+func (ArgumentObject) object() {}
 
 // Flags returns the flags with the given name in order.
-func (objs Objects) Flags(name string) []ObjectFlag {
-	var objFlags []ObjectFlag
+func (objs Objects) Flags(name string) []FlagObject {
+	var flagObjs []FlagObject
 
 	for _, obj := range objs {
 		// Ensure the current object is a flag.
-		objFlag, ok := obj.(ObjectFlag)
+		flagObj, ok := obj.(FlagObject)
 		if !ok {
 			continue
 		}
 
 		// Check if the name is correct and append.
-		if objFlag.Name == name {
-			objFlags = append(objFlags, objFlag)
+		if flagObj.Name == name {
+			flagObjs = append(flagObjs, flagObj)
 		}
 	}
 
-	return objFlags
+	return flagObjs
 }
 
 // Flag returns the first flag with the given name.
 //
 // An error will be returned if there are no flags found or if there is more
 // than one flag found.
-func (objs Objects) Flag(name string) (ObjectFlag, error) {
-	objFlags := objs.Flags(name)
-	if len(objFlags) == 0 {
-		return ObjectFlag{}, errFlagNotFound(name)
+func (objs Objects) Flag(name string) (FlagObject, error) {
+	flagObjs := objs.Flags(name)
+	if len(flagObjs) == 0 {
+		return FlagObject{}, FlagError{
+			Name: name,
+			Err:  ErrFlagNotFound,
+		}
 	}
-	if len(objFlags) > 1 {
-		return ObjectFlag{}, errTooManyFlags(name)
+	if len(flagObjs) > 1 {
+		return FlagObject{}, FlagError{
+			Name: name,
+			Err:  ErrTooManyFlags,
+		}
 	}
-	return objFlags[0], nil
+	return flagObjs[0], nil
 }
 
 // Argument returns the argument at the given index.
-func (objs Objects) Argument(i int) (ObjectArgument, error) {
+func (objs Objects) Argument(i int) (ArgumentObject, error) {
 	var j int
 
 	for _, obj := range objs {
-		objArg, ok := obj.(ObjectArgument)
+		argObj, ok := obj.(ArgumentObject)
 		if !ok {
 			continue
 		}
 
 		if j == i {
-			return objArg, nil
+			return argObj, nil
 		}
 
 		j++
 	}
 
-	return ObjectArgument{}, errArgumentNotFound(i)
+	return ArgumentObject{}, ArgumentError{
+		Index: i,
+		Err:   ErrArgumentNotFound,
+	}
 }

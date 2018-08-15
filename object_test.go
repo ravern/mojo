@@ -15,7 +15,7 @@ func TestObjects_Flags(t *testing.T) {
 	}
 
 	type rets struct {
-		objs []mojo.ObjectFlag
+		objs []mojo.FlagObject
 	}
 
 	tests := []struct {
@@ -27,8 +27,8 @@ func TestObjects_Flags(t *testing.T) {
 			name: "None",
 			args: args{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectArgument{Value: "nmap"},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.ArgumentObject{Value: "nmap"},
 				},
 				name: "-v",
 			},
@@ -38,14 +38,14 @@ func TestObjects_Flags(t *testing.T) {
 			name: "Many",
 			args: args{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectFlag{Name: "-v", Value: "a"},
-					mojo.ObjectFlag{Name: "-v", Value: "b"},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.FlagObject{Name: "-v", Value: "a"},
+					mojo.FlagObject{Name: "-v", Value: "b"},
 				},
 				name: "-v",
 			},
 			want: rets{
-				objs: []mojo.ObjectFlag{
+				objs: []mojo.FlagObject{
 					{Name: "-v", Value: "a"},
 					{Name: "-v", Value: "b"},
 				},
@@ -55,13 +55,13 @@ func TestObjects_Flags(t *testing.T) {
 			name: "One",
 			args: args{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectFlag{Name: "--verbose", Bool: true},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.FlagObject{Name: "--verbose", Bool: true},
 				},
 				name: "--verbose",
 			},
 			want: rets{
-				objs: []mojo.ObjectFlag{
+				objs: []mojo.FlagObject{
 					{Name: "--verbose", Bool: true},
 				},
 			},
@@ -85,7 +85,7 @@ func TestObjects_Flag(t *testing.T) {
 	}
 
 	type rets struct {
-		obj mojo.ObjectFlag
+		obj mojo.FlagObject
 		err error
 	}
 
@@ -98,8 +98,8 @@ func TestObjects_Flag(t *testing.T) {
 			name: "ErrFlagNotFound",
 			args: args{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectArgument{Value: "nmap"},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.ArgumentObject{Value: "nmap"},
 				},
 				name: "-v",
 			},
@@ -111,9 +111,9 @@ func TestObjects_Flag(t *testing.T) {
 			name: "ErrTooManyFlags",
 			args: args{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectFlag{Name: "-v", Bool: true},
-					mojo.ObjectFlag{Name: "-v", Bool: true},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.FlagObject{Name: "-v", Bool: true},
+					mojo.FlagObject{Name: "-v", Bool: true},
 				},
 				name: "-v",
 			},
@@ -125,13 +125,13 @@ func TestObjects_Flag(t *testing.T) {
 			name: "BoolFlagAndArgument",
 			args: args{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectFlag{Name: "--verbose", Bool: true},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.FlagObject{Name: "--verbose", Bool: true},
 				},
 				name: "--verbose",
 			},
 			want: rets{
-				obj: mojo.ObjectFlag{Name: "--verbose", Bool: true},
+				obj: mojo.FlagObject{Name: "--verbose", Bool: true},
 			},
 		},
 	}
@@ -157,7 +157,7 @@ func TestObjects_Argument(t *testing.T) {
 	}
 
 	type rets struct {
-		obj mojo.ObjectArgument
+		obj mojo.ArgumentObject
 		err error
 	}
 
@@ -170,8 +170,8 @@ func TestObjects_Argument(t *testing.T) {
 			name: "ErrArgumentNotFound",
 			args: args{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectArgument{Value: "nmap"},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.ArgumentObject{Value: "nmap"},
 				},
 				i: 1,
 			},
@@ -183,15 +183,15 @@ func TestObjects_Argument(t *testing.T) {
 			name: "BoolFlagAndArgument",
 			args: args{
 				objs: []mojo.Object{
-					mojo.ObjectCommand{Name: "tldr"},
-					mojo.ObjectFlag{Name: "--verbose", Bool: true},
-					mojo.ObjectArgument{Value: "netstat"},
-					mojo.ObjectArgument{Value: "nmap"},
+					mojo.CommandObject{Name: "tldr"},
+					mojo.FlagObject{Name: "--verbose", Bool: true},
+					mojo.ArgumentObject{Value: "netstat"},
+					mojo.ArgumentObject{Value: "nmap"},
 				},
 				i: 1,
 			},
 			want: rets{
-				obj: mojo.ObjectArgument{Value: "nmap"},
+				obj: mojo.ArgumentObject{Value: "nmap"},
 			},
 		},
 	}

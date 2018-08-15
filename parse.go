@@ -22,7 +22,7 @@ func parseCommand(conf Config, commands []string, args []string) ([]Object, erro
 	var objs []Object
 
 	// Append the root command to the objects and the command stack.
-	objs = append(objs, ObjectCommand{Name: args[0]})
+	objs = append(objs, CommandObject{Name: args[0]})
 	commands = append(commands, args[0])
 	args = args[1:]
 
@@ -45,7 +45,7 @@ func parseCommand(conf Config, commands []string, args []string) ([]Object, erro
 			}
 
 			// Append as argument.
-			objs = append(objs, ObjectArgument{Value: args[0]})
+			objs = append(objs, ArgumentObject{Value: args[0]})
 			args = args[1:]
 			continue
 		}
@@ -64,11 +64,11 @@ func parseCommand(conf Config, commands []string, args []string) ([]Object, erro
 		}
 
 		// Parse as flag.
-		objFlags, n, err := parseFlag(conf, commands, args)
+		flagObjs, n, err := parseFlag(conf, commands, args)
 		if err != nil {
 			return nil, err
 		}
-		for _, obj := range objFlags {
+		for _, obj := range flagObjs {
 			objs = append(objs, obj)
 		}
 		args = args[n:]
@@ -81,18 +81,21 @@ func parseCommand(conf Config, commands []string, args []string) ([]Object, erro
 // configuration.
 func parseDoubleDash(conf Config) (Object, error) {
 	if conf.DisallowDoubleDash {
-		return ObjectArgument{}, errInvalidFlag("--")
+		return ArgumentObject{}, FlagError{
+			Name: "--",
+			Err:  ErrInvalidFlag,
+		}
 	}
-	return ObjectArgument{
+	return ArgumentObject{
 		Value: "--",
 	}, nil
 }
 
 // parseFlag parses a flag from the given arguments based on the given
 // configuration.
-func parseFlag(conf Config, commands []string, args []string) ([]ObjectFlag, int, error) {
+func parseFlag(conf Config, commands []string, args []string) ([]FlagObject, int, error) {
 	var (
-		objs []ObjectFlag
+		objs []FlagObject
 		n    = 1
 	)
 
@@ -154,7 +157,7 @@ func parseFlag(conf Config, commands []string, args []string) ([]ObjectFlag, int
 
 	// Create the flag (FINALLY!).
 	var (
-		obj ObjectFlag
+		obj FlagObject
 		err error
 	)
 
@@ -187,23 +190,26 @@ func parseFlag(conf Config, commands []string, args []string) ([]ObjectFlag, int
 // The given value might or might not be used (e.g. the flag with the given name
 // is specified in the configuration to be a bool flag). Therefore, always check
 // Bool on the result and slice the arguments where necessary.
-func newFlag(conf Config, commands []string, name string, value string) (ObjectFlag, error) {
+func newFlag(conf Config, commands []string, name string, value string) (FlagObject, error) {
 	// Find the flag in the configuration. If the configuration cannot be
 	// found and unconfigured flags are not allowed, then return error.
-	confFlag, ok := configFlag(conf, commands, name)
+	flagConf, ok := configFlag(conf, commands, name)
 	if !conf.AllowUnconfiguredFlags && !ok {
-		return ObjectFlag{}, errUnconfiguredFlag(name)
+		return FlagObject{}, FlagError{
+			Name: name,
+			Err:  ErrUnconfiguredFlag,
+		}
 	}
 
 	// Create the flag. If the flag is defined to be a bool flag in the
 	// configuration, then don't use the value.
-	if ok && confFlag.Bool {
-		return ObjectFlag{
+	if ok && flagConf.Bool {
+		return FlagObject{
 			Name: name,
 			Bool: true,
 		}, nil
 	}
-	return ObjectFlag{
+	return FlagObject{
 		Name:  name,
 		Value: value,
 	}, nil
@@ -211,21 +217,27 @@ func newFlag(conf Config, commands []string, name string, value string) (ObjectF
 
 // newBoolFlag creates a new bool flag with the given name based on the given
 // configuration.
-func newBoolFlag(conf Config, commands []string, name string) (ObjectFlag, error) {
+func newBoolFlag(conf Config, commands []string, name string) (FlagObject, error) {
 	// Find the flag in the configuration. If the configuration cannot be
 	// found and unconfigured flags are not allowed, then return error.
-	confFlag, ok := configFlag(conf, commands, name)
+	flagConf, ok := configFlag(conf, commands, name)
 	if !conf.AllowUnconfiguredFlags && !ok {
-		return ObjectFlag{}, errUnconfiguredFlag(name)
+		return FlagObject{}, FlagError{
+			Name: name,
+			Err:  ErrUnconfiguredFlag,
+		}
 	}
 
 	// If the flag is a not bool flag, then return error.
-	if ok && !confFlag.Bool {
-		return ObjectFlag{}, errInvalidFlag(name)
+	if ok && !flagConf.Bool {
+		return FlagObject{}, FlagError{
+			Name: name,
+			Err:  ErrInvalidFlag,
+		}
 	}
 
 	// Create the flag.
-	return ObjectFlag{
+	return FlagObject{
 		Name: name,
 		Bool: true,
 	}, nil
@@ -237,23 +249,23 @@ func newBoolFlag(conf Config, commands []string, name string) (ObjectFlag, error
 // It is assumed that the command stack is safe. It it isn't, weird behaviour
 // will occur due to usage of invalid return values (i.e. the ok flag is
 // ignored).
-func configCommands(conf Config, commands []string) []ConfigCommand {
-	cmds := []ConfigCommand{conf.Root}
+func configCommands(conf Config, commands []string) []CommandConfig {
+	cmds := []CommandConfig{conf.Root}
 	for _, command := range commands[1:] {
 		cmd, _ := cmds[0].Command(command)
-		cmds = append([]ConfigCommand{cmd}, cmds...)
+		cmds = append([]CommandConfig{cmd}, cmds...)
 	}
 	return cmds
 }
 
 // configFlag returns the flag configuration of the flag with the given name,
 // with precedence given to configuration in the subcommands.
-func configFlag(conf Config, commands []string, name string) (ConfigFlag, bool) {
+func configFlag(conf Config, commands []string, name string) (FlagConfig, bool) {
 	cmds := configCommands(conf, commands)
 	for _, cmd := range cmds {
 		if flag, ok := cmd.Flag(name); ok {
 			return flag, ok
 		}
 	}
-	return ConfigFlag{}, false
+	return FlagConfig{}, false
 }
