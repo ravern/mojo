@@ -18,6 +18,7 @@ func Parse(conf Config, args []string) (Objects, error) {
 // configuration, in the context of the current command stack.
 //
 // The first argument given should be the name of the root command (e.g. git).
+// Note that the first argument is not checked.
 func parseCommand(conf Config, commands []string, args []string) ([]Object, error) {
 	var objs []Object
 
@@ -194,7 +195,7 @@ func newFlag(conf Config, commands []string, name string, value string) (FlagObj
 	// Find the flag in the configuration. If the configuration cannot be
 	// found and unconfigured flags are not allowed, then return error.
 	flagConf, ok := configFlag(conf, commands, name)
-	if !conf.AllowUnconfiguredFlags && !ok {
+	if conf.DisallowUnconfiguredFlags && !ok {
 		return FlagObject{}, FlagError{
 			Name: name,
 			Err:  ErrUnconfiguredFlag,
@@ -221,7 +222,7 @@ func newBoolFlag(conf Config, commands []string, name string) (FlagObject, error
 	// Find the flag in the configuration. If the configuration cannot be
 	// found and unconfigured flags are not allowed, then return error.
 	flagConf, ok := configFlag(conf, commands, name)
-	if !conf.AllowUnconfiguredFlags && !ok {
+	if conf.DisallowUnconfiguredFlags && !ok {
 		return FlagObject{}, FlagError{
 			Name: name,
 			Err:  ErrUnconfiguredFlag,

@@ -28,6 +28,7 @@ func TestParse(t *testing.T) {
 			name: "ErrUnconfiguredFlag",
 			args: args{
 				conf: mojo.Config{
+					DisallowUnconfiguredFlags: true,
 					Root: mojo.CommandConfig{
 						Name: "tldr",
 					},
@@ -42,6 +43,7 @@ func TestParse(t *testing.T) {
 			name: "ErrInvalidFlag",
 			args: args{
 				conf: mojo.Config{
+					DisallowUnconfiguredFlags: true,
 					Root: mojo.CommandConfig{
 						Name: "tldr",
 						Flags: []mojo.FlagConfig{
@@ -59,7 +61,8 @@ func TestParse(t *testing.T) {
 			name: "DisallowDoubleDash",
 			args: args{
 				conf: mojo.Config{
-					DisallowDoubleDash: true,
+					DisallowUnconfiguredFlags: true,
+					DisallowDoubleDash:        true,
 					Root: mojo.CommandConfig{
 						Name: "tldr",
 					},
@@ -74,6 +77,7 @@ func TestParse(t *testing.T) {
 			name: "Argument",
 			args: args{
 				conf: mojo.Config{
+					DisallowUnconfiguredFlags: true,
 					Root: mojo.CommandConfig{
 						Name: "tldr",
 					},
@@ -91,6 +95,7 @@ func TestParse(t *testing.T) {
 			name: "BoolFlagAndArgument",
 			args: args{
 				conf: mojo.Config{
+					DisallowUnconfiguredFlags: true,
 					Root: mojo.CommandConfig{
 						Name: "tldr",
 						Flags: []mojo.FlagConfig{
@@ -115,6 +120,7 @@ func TestParse(t *testing.T) {
 			name: "FlagAndArgument",
 			args: args{
 				conf: mojo.Config{
+					DisallowUnconfiguredFlags: true,
 					Root: mojo.CommandConfig{
 						Name: "tldr",
 						Flags: []mojo.FlagConfig{
@@ -136,8 +142,7 @@ func TestParse(t *testing.T) {
 			name: "MultipleFlagsAndArgument",
 			args: args{
 				conf: mojo.Config{
-					AllowMutipleFlags:      true,
-					AllowUnconfiguredFlags: true,
+					AllowMutipleFlags: true,
 					Root: mojo.CommandConfig{
 						Name: "tldr",
 					},
@@ -158,8 +163,7 @@ func TestParse(t *testing.T) {
 			name: "CombinedMultipleFlagValuesAndArgument",
 			args: args{
 				conf: mojo.Config{
-					AllowMutipleFlags:      true,
-					AllowUnconfiguredFlags: true,
+					AllowMutipleFlags: true,
 					Root: mojo.CommandConfig{
 						Name: "tldr",
 					},
@@ -179,6 +183,7 @@ func TestParse(t *testing.T) {
 			name: "SubcommandAndArgument",
 			args: args{
 				conf: mojo.Config{
+					DisallowUnconfiguredFlags: true,
 					Root: mojo.CommandConfig{
 						Name: "tldr",
 						Commands: []mojo.CommandConfig{
@@ -200,6 +205,7 @@ func TestParse(t *testing.T) {
 			name: "SubcommandOrArgument",
 			args: args{
 				conf: mojo.Config{
+					DisallowUnconfiguredFlags: true,
 					Root: mojo.CommandConfig{
 						Name: "tldr",
 						Commands: []mojo.CommandConfig{
@@ -220,6 +226,7 @@ func TestParse(t *testing.T) {
 			name: "SubcommandAndFlagAndArgument",
 			args: args{
 				conf: mojo.Config{
+					DisallowUnconfiguredFlags: true,
 					Root: mojo.CommandConfig{
 						Name: "tldr",
 						Commands: []mojo.CommandConfig{

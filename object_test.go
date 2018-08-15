@@ -70,7 +70,7 @@ func TestObjects_Flags(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var got rets
-			got.objs = test.args.objs.Flags(test.args.name)
+			got.objs = test.args.objs.ArrayFlag(test.args.name)
 			if !reflect.DeepEqual(got.objs, test.want.objs) {
 				t.Errorf("want objs %v, got objs %v", test.want.objs, got.objs)
 			}
@@ -118,7 +118,7 @@ func TestObjects_Flag(t *testing.T) {
 				name: "-v",
 			},
 			want: rets{
-				err: fmt.Errorf("mojo: too many flags: -v"),
+				err: fmt.Errorf("mojo: unexpected array flag: -v"),
 			},
 		},
 		{

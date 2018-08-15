@@ -13,9 +13,9 @@ var (
 	// exist in the configuration is found.
 	ErrUnconfiguredFlag = fmt.Errorf("mojo: unconfigured flag")
 
-	// ErrTooManyFlags occurs when more than one flag with the same name
+	// ErrUnexpectedArrayFlag occurs when more than one flag with the same name
 	// is found when only one is requested.
-	ErrTooManyFlags = fmt.Errorf("mojo: too many flags")
+	ErrUnexpectedArrayFlag = fmt.Errorf("mojo: unexpected array flag")
 )
 
 // FlagError represents a flag error.

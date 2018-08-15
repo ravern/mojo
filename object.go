@@ -53,8 +53,8 @@ type ArgumentObject struct {
 
 func (ArgumentObject) object() {}
 
-// Flags returns the flags with the given name in order.
-func (objs Objects) Flags(name string) []FlagObject {
+// ArrayFlag returns the flags with the given name in order.
+func (objs Objects) ArrayFlag(name string) []FlagObject {
 	var flagObjs []FlagObject
 
 	for _, obj := range objs {
@@ -78,7 +78,7 @@ func (objs Objects) Flags(name string) []FlagObject {
 // An error will be returned if there are no flags found or if there is more
 // than one flag found.
 func (objs Objects) Flag(name string) (FlagObject, error) {
-	flagObjs := objs.Flags(name)
+	flagObjs := objs.ArrayFlag(name)
 	if len(flagObjs) == 0 {
 		return FlagObject{}, FlagError{
 			Name: name,
@@ -88,7 +88,7 @@ func (objs Objects) Flag(name string) (FlagObject, error) {
 	if len(flagObjs) > 1 {
 		return FlagObject{}, FlagError{
 			Name: name,
-			Err:  ErrTooManyFlags,
+			Err:  ErrUnexpectedArrayFlag,
 		}
 	}
 	return flagObjs[0], nil
